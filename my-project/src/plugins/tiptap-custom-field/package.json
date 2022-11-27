@@ -1,0 +1,39 @@
+{
+  "name": "tiptap-custom-field",
+  "version": "0.0.0",
+  "description": "This is the description of the plugin.",
+  "strapi": {
+    "name": "tiptap-custom-field",
+    "description": "Description of tiptap-custom-field plugin",
+    "kind": "plugin"
+  },
+  "dependencies": {
+    "@strapi/helper-plugin": "^4.5.2",
+    "@strapi/icons": "^1.3.1",
+    "@tiptap/extension-code-block-lowlight": "^2.0.0-beta.204",
+    "@tiptap/react": "^2.0.0-beta.204",
+    "@tiptap/starter-kit": "^2.0.0-beta.204",
+    "highlight.js": "^11.7.0",
+    "lowlight": "^2.8.0"
+  },
+  "devDependencies": {
+    "typescript": "4.6.3"
+  },
+  "author": {
+    "name": "A Strapi developer"
+  },
+  "maintainers": [
+    {
+      "name": "A Strapi developer"
+    }
+  ],
+  "engines": {
+    "node": ">=14.19.1 <=18.x.x",
+    "npm": ">=6.0.0"
+  },
+  "scripts": {
+    "develop": "tsc -w",
+    "build": "tsc"
+  },
+  "license": "MIT"
+}
