@@ -4,21 +4,26 @@
  *
  */
 
-import React, { useState, useEffect } from "react";
-import Tiptap from "../../components/Tiptap/Tiptap";
-import pluginId from "../../pluginId";
+import React, { useState, useEffect } from 'react';
+import Tiptap from '../../components/Tiptap/Tiptap';
+import pluginId from '../../pluginId';
 
-const HomePage: React.VoidFunctionComponent = () => {
-  const [monaco, setMonaco] = useState<any>();
-  const [editor, setEditor] = useState<any>();
+import styled from '@emotion/styled';
 
+const PageWrapper = styled.div`
 
-  return (
-    <div>
-      <h1>{pluginId}&apos;s HomePage</h1>
-      <Tiptap />
-    </div>
-  );
+`;
+
+const HomePage = (): JSX.Element => {
+    const [monaco, setMonaco] = useState<any>();
+    const [editor, setEditor] = useState<any>();
+
+    return (
+        <PageWrapper>
+            <h1>{pluginId}&apos;s HomePage22</h1>
+            <Tiptap />
+        </PageWrapper>
+    );
 };
 
 export default HomePage;
