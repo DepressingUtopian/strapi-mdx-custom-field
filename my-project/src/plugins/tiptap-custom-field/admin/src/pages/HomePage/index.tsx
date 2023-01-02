@@ -15,12 +15,8 @@ const PageWrapper = styled.div`
 `;
 
 const HomePage = (): JSX.Element => {
-    const [monaco, setMonaco] = useState<any>();
-    const [editor, setEditor] = useState<any>();
-
     return (
         <PageWrapper>
-            <h1>{pluginId}&apos;s HomePage22</h1>
             <Tiptap />
         </PageWrapper>
     );

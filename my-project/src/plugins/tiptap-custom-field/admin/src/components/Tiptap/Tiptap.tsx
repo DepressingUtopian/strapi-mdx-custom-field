@@ -3,23 +3,19 @@ import React, { useEffect } from 'react';
 import {
     useEditor,
     EditorContent,
-    ReactNodeViewRenderer,
-    Extension,
 } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+
 import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
-import markdown from 'highlight.js/lib/languages/markdown';
-import js from 'highlight.js/lib/languages/javascript';
-import css from 'highlight.js/lib/languages/css';
-import ts from 'highlight.js/lib/languages/typescript';
 
-import CodeBlockComponent from './CodeBlockComponent';
+
+import { Button } from '@strapi/design-system';
+
+import Text from '@tiptap/extension-text';
 
 import styled from '@emotion/styled';
 import CodeBlock from '@tiptap/extension-code-block';
-import CodeBlockPrism from './extension-code-block-prism/src';
+import CodeBlockPrism from 'tiptap-extension-code-block-prism';
 
 
 const MenuBar = ({ editor }) => {
@@ -43,9 +39,6 @@ const MenuBar = ({ editor }) => {
 
 const Container = styled.div`
     padding: 1rem;
-    height: 600px;
-    width: 600px;
-    background: beige;
     position: relative;
 
     code[class*='language-'],
@@ -222,6 +215,13 @@ const Container = styled.div`
     .token.tag.class-name {
       color: #8be9fd;
     }
+    
+    .custom-editor {
+        min-height: 420px;
+        max-height: 500px;
+        background: white;
+        overflow-y: scroll;
+    }
 `;
 
 const Tiptap = () => {
@@ -236,12 +236,28 @@ const Tiptap = () => {
             }),
         ],
         content: ``,
+        editorProps: {
+            attributes: {
+                class: 'custom-editor'
+            }
+        }
     });
 
+    useEffect(() => {
+        if(editor) {
+            editor.on('update', () => {
+                if(!editor.isActive('codeBlock')) {
+                    console.log('update event');
+                    editor.chain().focus().setCodeBlock().run();     
+                }
+              })
+        }
+    }, [editor]);
+    
     return (
         <Container className='editor'>
             {/* <MenuBar editor={editor} /> */}
-            <EditorContent editor={editor} />
+            <EditorContent editor={editor}   />
         </Container>
     );
 };
