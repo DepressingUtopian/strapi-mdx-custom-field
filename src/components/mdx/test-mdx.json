@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_mdx_test_mdxes",
+  "info": {
+    "displayName": "TestMDX",
+    "icon": "ambulance",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "customField",
+      "customField": "plugin::tiptap-custom-field.mdx"
+    },
+    "content": {
+      "type": "customField",
+      "customField": "plugin::tiptap-custom-field.mdx"
+    }
+  }
+}

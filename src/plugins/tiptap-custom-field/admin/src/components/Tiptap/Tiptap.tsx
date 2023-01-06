@@ -1,264 +1,212 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import {
-    useEditor,
-    EditorContent,
-} from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 
 import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
+import History from '@tiptap/extension-history';
 
-
-import { Button } from '@strapi/design-system';
+import {
+    Field,
+    FieldLabel,
+    FieldHint,
+    FieldError,
+    IconButton,
+    IconButtonGroup,
+    Stack,
+} from '@strapi/design-system';
+import { Brush, Moon, Sun } from '@strapi/icons';
 
 import Text from '@tiptap/extension-text';
 
 import styled from '@emotion/styled';
+import { css } from '@emotion/react';
 import CodeBlock from '@tiptap/extension-code-block';
 import CodeBlockPrism from 'tiptap-extension-code-block-prism';
 
+import prettier from 'prettier';
 
-const MenuBar = ({ editor }) => {
-    if (!editor) {
-        return null;
-    }
+import pluginMarkdown from 'prettier/parser-markdown';
+import { COY_THEME, GRUVBOX_DARK_THEME } from './themes';
 
-    useEffect(() => {
-        editor.chain().focus().toggleCodeBlock().run();
-    }, []);
-
-    return (
-        <button
-            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-            className={editor.isActive('codeBlock') ? 'is-active' : ''}
-        >
-            code block
-        </button>
-    );
+const setEditorCodeContent = (editor, code) => {
+    editor.commands.setContent({
+        type: 'doc',
+        content: [
+            {
+                type: 'paragraph',
+                content: [
+                    {
+                        type: 'text',
+                        text: code,
+                    },
+                ],
+            },
+        ],
+    });
+    editor.chain().setCodeBlock({ language: 'jsx' }).run();
 };
 
-const Container = styled.div`
+const MenuBar = ({ editor, isDarkTheme, toogleTheme, disabled }) => {
+    const formatTextWithPrettier = () => {
+        try {
+            const text = editor.getText();
+
+            const cursorPos = editor.state.selection.$anchor.pos;
+            const formattedText = prettier.formatWithCursor(text, {
+                cursorOffset: cursorPos,
+                parser: 'mdx',
+                plugins: [pluginMarkdown],
+            });
+            setEditorCodeContent(editor, formattedText.formatted);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    return editor ? (
+        <IconButtonGroup>
+            <IconButton
+                onClick={() => formatTextWithPrettier()}
+                label='Форматировать'
+                icon={<Brush />}
+                disabled={disabled}
+            />
+            <IconButton
+                onClick={() => toogleTheme()}
+                label={isDarkTheme ? 'Светлая тема' : 'Темная тема'}
+                icon={isDarkTheme ? <Sun /> : <Moon />}
+                disabled={disabled}
+            />
+        </IconButtonGroup>
+    ) : null;
+};
+
+const Container = styled.div<{ isDark?: boolean; disabled?: boolean }>`
     padding: 1rem;
+    width: 100%;
     position: relative;
 
-    code[class*='language-'],
-    pre[class*='language-'] {
-        color: #abb2bf;
-        background: none;
-        font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-        text-align: left;
-        white-space: pre;
-        word-spacing: normal;
-        word-break: normal;
-        word-wrap: normal;
-        line-height: 1.5;
-        -moz-tab-size: 4;
-        -o-tab-size: 4;
-        tab-size: 4;
-        -webkit-hyphens: none;
-        -moz-hyphens: none;
-        -ms-hyphens: none;
-        hyphens: none;
-    }
+    ${({ isDark }) => (isDark ? GRUVBOX_DARK_THEME : COY_THEME)};
 
-    pre[class*='language-']::-moz-selection,
-    pre[class*='language-'] ::-moz-selection,
-    code[class*='language-']::-moz-selection,
-    code[class*='language-'] ::-moz-selection {
-        text-shadow: none;
-        background: #383e49;
-    }
+    ${({ disabled }) =>
+        disabled
+            ? css`
+                  cursor: not-allowed;
+              `
+            : ''};
 
-    pre[class*='language-']::selection,
-    pre[class*='language-'] ::selection,
-    code[class*='language-']::selection,
-    code[class*='language-'] ::selection {
-        text-shadow: none;
-        background: #9aa2b1;
-    }
-
-    @media print {
-        code[class*='language-'],
-        pre[class*='language-'] {
-            text-shadow: none;
-        }
-    }
-    /* Code blocks */
-    pre[class*='language-'] {
-        padding: 1em;
-        margin: 0.5em 0;
-        overflow: auto;
-    }
-
-    :not(pre) > code[class*='language-'],
-    pre[class*='language-'] {
-        background: #282c34;
-    }
-
-    /* Inline code */
-    :not(pre) > code[class*='language-'] {
-        padding: 0.1em;
-        border-radius: 0.3em;
-        white-space: normal;
-    }
-
-    .token.comment,
-    .token.prolog,
-    .token.doctype,
-    .token.cdata {
-        color: #5c6370;
-    }
-
-    .token.punctuation {
-        color: #abb2bf;
-    }
-
-    .token.selector,
-    .token.tag {
-        color: #e06c75;
-    }
-
-    .token.property,
-    .token.boolean,
-    .token.number,
-    .token.constant,
-    .token.symbol,
-    .token.attr-name,
-    .token.deleted {
-        color: #d19a66;
-    }
-
-    .token.string,
-    .token.char,
-    .token.attr-value,
-    .token.builtin,
-    .token.inserted {
-        color: #98c379;
-    }
-
-    .token.operator,
-    .token.entity,
-    .token.url,
-    .language-css .token.string,
-    .style .token.string {
-        color: #56b6c2;
-    }
-
-    .token.atrule,
-    .token.keyword {
-        color: #c678dd;
-    }
-
-    .token.function {
-        color: #61afef;
-    }
-
-    .token.regex,
-    .token.important,
-    .token.variable {
-        color: #c678dd;
-    }
-
-    .token.important,
-    .token.bold {
-        font-weight: bold;
-    }
-
-    .token.italic {
-        font-style: italic;
-    }
-
-    .token.entity {
-        cursor: help;
-    }
-
-    pre.line-numbers {
-        position: relative;
-        padding-left: 3.8em;
-        counter-reset: linenumber;
-    }
-
-    pre.line-numbers > code {
-        position: relative;
-    }
-
-    .line-numbers .line-numbers-rows {
-        position: absolute;
-        pointer-events: none;
-        top: 0;
-        font-size: 100%;
-        left: -3.8em;
-        width: 3em; /* works for line-numbers below 1000 lines */
-        letter-spacing: -1px;
-        border-right: 0;
-
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-    }
-
-    .line-numbers-rows > span {
-        pointer-events: none;
-        display: block;
-        counter-increment: linenumber;
-    }
-
-    .line-numbers-rows > span:before {
-        content: counter(linenumber);
-        color: #5c6370;
-        display: block;
-        padding-right: 0.8em;
-        text-align: right;
-    }
-
-    .token.tag.class-name {
-      color: #8be9fd;
-    }
-    
     .custom-editor {
-        min-height: 420px;
-        max-height: 500px;
-        background: white;
-        overflow-y: scroll;
+        ${({ isDark, disabled }) =>
+            disabled
+                ? css`
+                      background-color: ${isDark ? '' : '#0000006e'};
+                      pointer-events: none;
+                  `
+                : ''};
     }
 `;
 
-const Tiptap = () => {
+const Tiptap = ({
+    name,
+    error,
+    description,
+    required,
+    attribute,
+    intlLabel,
+    onChange,
+    value,
+    ...props
+}: any) => {
     const editor = useEditor({
         extensions: [
             Document,
             Paragraph,
             Text,
-            CodeBlock,
+            History.configure({
+                depth: 10,
+            }),
+            CodeBlock.configure({
+                exitOnTripleEnter: false,
+                exitOnArrowDown: false,
+            }),
             CodeBlockPrism.configure({
                 defaultLanguage: 'jsx',
+                exitOnTripleEnter: false,
+                exitOnArrowDown: false,
+                HTMLAttributes: {
+                    class: 'language-jsx',
+                },
             }),
         ],
+        editable: !attribute.disabled,
         content: ``,
         editorProps: {
             attributes: {
-                class: 'custom-editor'
-            }
-        }
+                class: 'custom-editor',
+            },
+        },
     });
 
+    const [isDarkTheme, setIsDarkTheme] = useState<boolean>(false);
+
+    const updateContent = (editor) => {
+        const content = editor.getText();
+
+        onChange({
+            target: { name, value: content, type: attribute.type },
+        });
+
+        if (!editor.isActive('codeBlock')) {
+            editor.chain().focus().setCodeBlock({ language: 'jsx' }).run();
+        }
+    };
+
     useEffect(() => {
-        if(editor) {
-            editor.on('update', () => {
-                if(!editor.isActive('codeBlock')) {
-                    console.log('update event');
-                    editor.chain().focus().setCodeBlock().run();     
-                }
-              })
+        if (value && editor) {
+            setEditorCodeContent(editor, value);
+        }
+    }, [value, editor]);
+
+    useEffect(() => {
+        if (editor) {
+            editor.on('update', ({ editor }) => {
+                updateContent(editor);
+            });
+
+            editor.on('focus', ({ editor }) => {
+                updateContent(editor);
+            });
         }
     }, [editor]);
-    
+
     return (
-        <Container className='editor'>
-            {/* <MenuBar editor={editor} /> */}
-            <EditorContent editor={editor}   />
-        </Container>
+        <Field
+            id={name}
+            name={name}
+            error={error}
+            hint={description?.defaultMessage}
+            required={required}
+        >
+            <Stack spacing={1}>
+                <FieldLabel>{intlLabel.id}</FieldLabel>
+                <Container
+                    className='editor'
+                    isDark={isDarkTheme}
+                    disabled={attribute.disabled}
+                >
+                    <MenuBar
+                        editor={editor}
+                        isDarkTheme={isDarkTheme}
+                        toogleTheme={() => setIsDarkTheme((prev) => !prev)}
+                        disabled={attribute.disabled}
+                    />
+                    <EditorContent editor={editor} />
+                </Container>
+                <FieldHint />
+                <FieldError />
+            </Stack>
+        </Field>
     );
 };
 
