@@ -1,9 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import {
+    useEditor,
+    EditorContent,
+    BubbleMenu as BubbleMenuElement,
+} from '@tiptap/react';
 
 import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
+import History from '@tiptap/extension-history';
+import BubbleMenu from '@tiptap/extension-bubble-menu';
 
 import {
     Field,
@@ -13,6 +19,7 @@ import {
     IconButton,
     IconButtonGroup,
     Stack,
+    Button,
 } from '@strapi/design-system';
 import { Brush, Moon, Sun } from '@strapi/icons';
 
@@ -24,30 +31,12 @@ import { css } from '@emotion/react';
 import CodeBlock from '@tiptap/extension-code-block';
 import CodeBlockPrism from 'tiptap-extension-code-block-prism';
 
-
 import prettier from 'prettier';
 
 import pluginMarkdown from 'prettier/parser-babel';
 import { COY_THEME, GRUVBOX_DARK_THEME } from './themes';
-
-
-const setEditorCodeContent = (editor, code) => {
-    editor.commands.setContent({
-        type: 'doc',
-        content: [
-            {
-                type: 'paragraph',
-                content: [
-                    {
-                        type: 'text',
-                        text: code,
-                    },
-                ],
-            },
-        ],
-    });
-    editor.chain().setCodeBlock({ language: 'jsx' }).run();
-};
+import { handleClickBubbleButton, setEditorCodeContent } from './utils';
+import { Templates } from './mdxTemplates';
 
 const MenuBar = ({ editor, isDarkTheme, toogleTheme, disabled }) => {
     const formatTextWithPrettier = () => {
@@ -59,25 +48,25 @@ const MenuBar = ({ editor, isDarkTheme, toogleTheme, disabled }) => {
                 cursorOffset: cursorPos,
                 parser: 'babel',
                 plugins: [pluginMarkdown],
-                embeddedLanguageFormatting: "auto",
+                embeddedLanguageFormatting: 'auto',
                 tabWidth: 4,
                 useTabs: true,
                 singleAttributePerLine: true,
-                semi: true,
+                semi: false,
                 singleQuote: true,
                 jsxSingleQuote: true,
                 bracketSameLine: true,
             });
-            
+
             console.log('res', formattedText);
-            setEditorCodeContent(editor, formattedText.formatted);
+            setEditorCodeContent(editor, formattedText.formatted[0] === ';' ? formattedText.formatted.substring(1) : formattedText.formatted);
         } catch (err) {
             console.error(err);
         }
     };
 
     return editor ? (
-        <IconButtonGroup>
+        <IconButtonGroup style={{paddingBottom: '12px'}}>
             <IconButton
                 onClick={() => formatTextWithPrettier()}
                 label='Форматировать'
@@ -136,6 +125,10 @@ const Tiptap = ({
             Document,
             Paragraph,
             Text,
+            BubbleMenu,
+            History.configure({
+                depth: 10,
+            }),
             CodeBlock.configure({
                 exitOnTripleEnter: false,
                 exitOnArrowDown: false,
@@ -176,7 +169,7 @@ const Tiptap = ({
 
     useEffect(() => {
         if (value && editor) {
-            console.log('set value', value);   
+            console.log('set value', value);
 
             setEditorCodeContent(editor, value);
         }
@@ -215,6 +208,29 @@ const Tiptap = ({
                         toogleTheme={() => setIsDarkTheme((prev) => !prev)}
                         disabled={attribute.disabled}
                     />
+                    {editor ? (
+                        <BubbleMenuElement
+                            editor={editor}
+                            tippyOptions={{ duration: 100 }}
+                        >
+                            <Stack horizontal>
+                                {Templates.map((template) => (
+                                    <Button
+                                        variant='tertiary'
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleClickBubbleButton(
+                                                editor,
+                                                template.construct
+                                            );
+                                        }}
+                                    >
+                                        {template.label}
+                                    </Button>
+                                ))}
+                            </Stack>
+                        </BubbleMenuElement>
+                    ) : null}
                     <EditorContent editor={editor} />
                 </Container>
                 <FieldHint />
@@ -225,4 +241,3 @@ const Tiptap = ({
 };
 
 export default Tiptap;
-
