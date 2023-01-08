@@ -23,20 +23,12 @@ import { css } from '@emotion/react';
 
 import CodeBlock from '@tiptap/extension-code-block';
 import CodeBlockPrism from 'tiptap-extension-code-block-prism';
-import Collaboration from '@tiptap/extension-collaboration';
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 
-import { WebrtcProvider } from 'y-webrtc';
-import * as Y from 'yjs';
 
 import prettier from 'prettier';
 
-import pluginMarkdown from 'prettier/parser-markdown';
+import pluginMarkdown from 'prettier/parser-babel';
 import { COY_THEME, GRUVBOX_DARK_THEME } from './themes';
-
-const ydoc = new Y.Doc();
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 
 const setEditorCodeContent = (editor, code) => {
@@ -65,9 +57,19 @@ const MenuBar = ({ editor, isDarkTheme, toogleTheme, disabled }) => {
             const cursorPos = editor.state.selection.$anchor.pos;
             const formattedText = prettier.formatWithCursor(text, {
                 cursorOffset: cursorPos,
-                parser: 'mdx',
+                parser: 'babel',
                 plugins: [pluginMarkdown],
+                embeddedLanguageFormatting: "auto",
+                tabWidth: 4,
+                useTabs: true,
+                singleAttributePerLine: true,
+                semi: true,
+                singleQuote: true,
+                jsxSingleQuote: true,
+                bracketSameLine: true,
             });
+            
+            console.log('res', formattedText);
             setEditorCodeContent(editor, formattedText.formatted);
         } catch (err) {
             console.error(err);
@@ -129,7 +131,6 @@ const Tiptap = ({
     type,
     ...props
 }: any) => {
-    const provider = useRef<WebrtcProvider>();
     const editor = useEditor({
         extensions: [
             Document,
@@ -139,11 +140,6 @@ const Tiptap = ({
                 exitOnTripleEnter: false,
                 exitOnArrowDown: false,
             }),
-            // @ts-ignore
-            Collaboration.configure({
-                document: ydoc,
-                field: type + '-' + name,
-              }),
             CodeBlockPrism.configure({
                 defaultLanguage: 'jsx',
                 exitOnTripleEnter: false,
@@ -179,26 +175,10 @@ const Tiptap = ({
     console.log('name', name, 'props', props);
 
     useEffect(() => {
-        if(!provider.current) {
-            provider.current = new WebrtcProvider('tiptap-collaboration-extension' + '-' + type + '-' + name, ydoc);
-            console.log('create provider', provider, provider.current.awareness.clientID);
-        }
-       
-        return () => {
-            if(provider.current) {
-                provider.current.destroy();
-            }
-        }
-    }, []);
+        if (value && editor) {
+            console.log('set value', value);   
 
-    useEffect(() => {
-        if (value && editor && provider.current) {
-            console.log('set value', value);
-            const clientsCount =  provider.current.doc.store.clients.size;            
-            console.log('clientsCount', clientsCount);
-            if(clientsCount === 1) {
-                setEditorCodeContent(editor, value);
-            }
+            setEditorCodeContent(editor, value);
         }
     }, [editor]);
 
