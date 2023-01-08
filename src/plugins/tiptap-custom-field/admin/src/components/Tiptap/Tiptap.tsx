@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import { useEditor, EditorContent } from '@tiptap/react';
 
 import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
-import History from '@tiptap/extension-history';
 
 import {
     Field,
@@ -21,13 +20,24 @@ import Text from '@tiptap/extension-text';
 
 import styled from '@emotion/styled';
 import { css } from '@emotion/react';
+
 import CodeBlock from '@tiptap/extension-code-block';
 import CodeBlockPrism from 'tiptap-extension-code-block-prism';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+
+import { WebrtcProvider } from 'y-webrtc';
+import * as Y from 'yjs';
 
 import prettier from 'prettier';
 
 import pluginMarkdown from 'prettier/parser-markdown';
 import { COY_THEME, GRUVBOX_DARK_THEME } from './themes';
+
+const ydoc = new Y.Doc();
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 
 const setEditorCodeContent = (editor, code) => {
     editor.commands.setContent({
@@ -116,20 +126,24 @@ const Tiptap = ({
     intlLabel,
     onChange,
     value,
+    type,
     ...props
 }: any) => {
+    const provider = useRef<WebrtcProvider>();
     const editor = useEditor({
         extensions: [
             Document,
             Paragraph,
             Text,
-            History.configure({
-                depth: 10,
-            }),
             CodeBlock.configure({
                 exitOnTripleEnter: false,
                 exitOnArrowDown: false,
             }),
+            // @ts-ignore
+            Collaboration.configure({
+                document: ydoc,
+                field: type + '-' + name,
+              }),
             CodeBlockPrism.configure({
                 defaultLanguage: 'jsx',
                 exitOnTripleEnter: false,
@@ -152,7 +166,7 @@ const Tiptap = ({
 
     const updateContent = (editor) => {
         const content = editor.getText();
-
+        console.log('updateContent');
         onChange({
             target: { name, value: content, type: attribute.type },
         });
@@ -162,11 +176,31 @@ const Tiptap = ({
         }
     };
 
+    console.log('name', name, 'props', props);
+
     useEffect(() => {
-        if (value && editor) {
-            setEditorCodeContent(editor, value);
+        if(!provider.current) {
+            provider.current = new WebrtcProvider('tiptap-collaboration-extension' + '-' + type + '-' + name, ydoc);
+            console.log('create provider', provider, provider.current.awareness.clientID);
         }
-    }, [value, editor]);
+       
+        return () => {
+            if(provider.current) {
+                provider.current.destroy();
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        if (value && editor && provider.current) {
+            console.log('set value', value);
+            const clientsCount =  provider.current.doc.store.clients.size;            
+            console.log('clientsCount', clientsCount);
+            if(clientsCount === 1) {
+                setEditorCodeContent(editor, value);
+            }
+        }
+    }, [editor]);
 
     useEffect(() => {
         if (editor) {
@@ -211,3 +245,4 @@ const Tiptap = ({
 };
 
 export default Tiptap;
+

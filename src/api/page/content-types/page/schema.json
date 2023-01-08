@@ -23,7 +23,7 @@
         "format": true
       },
       "required": false,
-      "disabled": true
+      "disabled": false
     }
   }
 }
